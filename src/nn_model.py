@@ -2,7 +2,6 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import os
-import glob
 
 data_dir = "/u02/dataset/car_brands/data"
 

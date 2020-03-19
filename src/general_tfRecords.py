@@ -35,7 +35,7 @@ def load_file(example_list_file):
     for example, label in lines:
         examples.append(example)
         labels.append(int(label))
-    return np.asarray(examples), np.asarray(labels), len(lines)
+    return np.asarray(examples), np.asarray(labels), len(lines), len(set(labels))
 
 def convertjpg(jpgfile, width=256, height=256):
 #     print(jpgfile)
@@ -55,7 +55,7 @@ def _int64_feature(value):
 def trans2tfRecord(trainFile, name, output_dir, height=256, width=256):
     if not os.path.exists(output_dir) or os.path.isfile(output_dir):
         os.makedirs(output_dir)
-    _examples, _labels, example_num = load_file(trainFile)
+    _examples, _labels, example_num, catelogy_num = load_file(trainFile)
     filename = name + '.tfrecords'
     filename = os.path.join(output_dir, filename)
     writer = tf.python_io.TFRecordWriter(filename)
@@ -70,6 +70,9 @@ def trans2tfRecord(trainFile, name, output_dir, height=256, width=256):
             }))
         writer.write(example.SerializeToString())
     writer.close()
+    with open(os.path.join(output_dir,'train_sum.txt'), 'w') as f:
+        content = "example_num=" + str(example_num)  + "\n" + "catelogy_num=" + str(catelogy_num) + "\n" 
+        f.write(content)
 
 
 if __name__ == "__main__":

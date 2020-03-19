@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 
-data_dir = "/u02/dataset/car_brands/data"
+data_base_dir = "../dataset/car_brands/data/"
 tfRecords_file_path = "../tfRecords_data/"
 
 def load_labels(path):
@@ -17,9 +17,10 @@ def load_labels(path):
         i += 1
     return car_type_2_labels, labels_2_car_type
 
-car_type_2_labels, labels_2_car_type = load_labels(data_dir)
+car_type_2_labels, labels_2_car_type = load_labels(os.path.join(data_base_dir, 'train'))
 
 def getTrainList():
+    data_dir = os.path.join(data_base_dir, 'train')
     with open('train.txt', 'w') as f:
         for label_dir in os.listdir(data_dir):
             tmp_path = os.path.join(data_dir, label_dir)
@@ -27,6 +28,17 @@ def getTrainList():
                 fpath = os.path.join(tmp_path, fname)
                 line = fpath + " " + str(car_type_2_labels[label_dir]) + "\n"
                 f.write(line)
+
+def getValList():
+    data_dir = os.path.join(data_base_dir, 'val')
+    with open('val.txt', 'w') as f:
+        for label_dir in os.listdir(data_dir):
+            tmp_path = os.path.join(data_dir, label_dir)
+            for fname in os.listdir(tmp_path):
+                fpath = os.path.join(tmp_path, fname)
+                line = fpath + " " + str(car_type_2_labels[label_dir]) + "\n"
+                f.write(line)
+
 
 def load_file(example_list_file):
     lines = np.genfromtxt(example_list_file, delimiter=" ", encoding='utf-8', dtype='U75')
@@ -70,7 +82,7 @@ def trans2tfRecord(trainFile, name, output_dir, height=256, width=256):
             }))
         writer.write(example.SerializeToString())
     writer.close()
-    with open(os.path.join(output_dir,'train_sum.txt'), 'w') as f:
+    with open(os.path.join(output_dir, name + '_sum.txt'), 'w') as f:
         content = "example_num=" + str(example_num)  + "\n" + "catelogy_num=" + str(category_num) + "\n" 
         f.write(content)
 
@@ -78,4 +90,6 @@ def trans2tfRecord(trainFile, name, output_dir, height=256, width=256):
 if __name__ == "__main__":
     getTrainList()
     trans2tfRecord('train.txt', 'tf_train', tfRecords_file_path)
+    getValList()
+    trans2tfRecord('val.txt', 'tf_val', tfRecords_file_path)
     

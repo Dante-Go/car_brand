@@ -72,8 +72,8 @@ class CAR_BRAND_MODEL:
 				feed_dict = {self.X: X_batch, self.y: Y_batch}
 				self._sess.run(self._optimizer, feed_dict=feed_dict)
 				if total_batch % 1000 == 0:
-					X_val, y_val = self._sess.run([source_val, y_val])
-					losses, acc_val = self._sess.run([self._mean_loss, self._accuracy], feed_dict={self.X: X_val, self.y: y_val})
+					X_val, y_v = self._sess.run([source_val, y_val])
+					losses, acc_val = self._sess.run([self._mean_loss, self._accuracy], feed_dict={self.X: X_val, self.y: y_v})
 					time_dif = timedelta(seconds=int(round(time.time() - start_time)))
 					msg = "Epoch: {0:>4}, Iter: {1:>6}, Time: {2}, loss: {3}, acc: {4}"
 					print(msg.format(epoch, total_batch, time_dif, losses, acc_val))
@@ -131,7 +131,8 @@ with tf.Session() as sess:
 	print(threads)
 	try:
 		if not coord.should_stop():
-			model.fit_CAR_BRAND(source_train=image_batches, y_train=label_batches, source_val=val_image_batches, y_val=val_label_batch)
+			model.fit_CAR_BRAND(source_train=image_batches, y_train=label_batches, source_val=val_image_batches, y_val=val_label_batches)
+# 			print('test')
 	except tf.errors.OutOfRangeError:
 		print('Catch OutOfRangeError')
 	finally:

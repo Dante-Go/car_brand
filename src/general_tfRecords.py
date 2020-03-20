@@ -10,7 +10,7 @@ tfRecords_file_path = "../tfRecords_data/"
 def load_labels(path):
     car_type_2_labels = {}
     labels_2_car_type = {}
-    i = 1
+    i = 0
     for label_dir in os.listdir(path):
         labels_2_car_type[i] = label_dir
         car_type_2_labels[label_dir] = i

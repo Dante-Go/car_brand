@@ -10,10 +10,10 @@ train_sum_file = "../tfRecords_data/tf_train_sum.txt"
 tfRecords_val_file = "../tfRecords_data/tf_val.tfrecords"
 val_sum_file = "../tfRecords_data/tf_val_sum.txt"
 
-tensorboard_dir = "../tensorboard_view/"
+tensorboard_dir = "../tensorboard_view/view/"
 
 batch = 64
-epoch = 20
+epoch = 2000
 
 def load_sum_info(sum_file):
 	with open(sum_file, 'r') as f:
@@ -42,7 +42,7 @@ def read_tfRecord(file_tfRecord, shuffle=False, epochs=None):
 	label = tf.cast(features['label'], tf.int64)
 	print(image, label)
 	return image, label
-	
+
 
 with tf.Session() as sess:
 	print('training')
@@ -56,6 +56,7 @@ with tf.Session() as sess:
 	model = CAR_BRAND_MODEL(sess=sess, category_n=category_num, example_n=example_num, batch_size=batch, epochs=epoch)
 	init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
 	sess.run(init_op)
+	model.restore_car_model()
 	coord = tf.train.Coordinator()
 	threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 	writer = tf.summary.FileWriter(tensorboard_dir)

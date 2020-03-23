@@ -10,7 +10,7 @@ train_sum_file = "../tfRecords_data/tf_train_sum.txt"
 tfRecords_val_file = "../tfRecords_data/tf_val.tfrecords"
 val_sum_file = "../tfRecords_data/tf_val_sum.txt"
 
-tensorboard_dir = "../tensorboard_view/view/"
+tensorboard_dir = "../tensorboard_view/view/train_01"
 
 batch = 64
 epoch = 2000
@@ -43,6 +43,8 @@ def read_tfRecord(file_tfRecord, shuffle=False, epochs=None):
 	print(image, label)
 	return image, label
 
+writer = tf.summary.FileWriter(tensorboard_dir)
+
 
 with tf.Session() as sess:
 	print('training')
@@ -53,14 +55,12 @@ with tf.Session() as sess:
 	capacity = min_after_dequeue + 3*batch
 	image_batches, label_batches = tf.train.shuffle_batch([img_batch, label_batch], batch_size=batch, capacity=capacity, min_after_dequeue=min_after_dequeue)
 	val_image_batches, val_label_batches = tf.train.shuffle_batch([val_img_batch, val_label_batch], batch_size=batch, capacity=capacity, min_after_dequeue=min_after_dequeue)
-	model = CAR_BRAND_MODEL(sess=sess, category_n=category_num, example_n=example_num, batch_size=batch, epochs=epoch)
+	model = CAR_BRAND_MODEL(sess=sess, category_n=category_num, example_n=example_num, batch_size=batch, epochs=epoch, tb_writer=writer)
 	init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
 	sess.run(init_op)
 	model.restore_car_model()
 	coord = tf.train.Coordinator()
 	threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-	writer = tf.summary.FileWriter(tensorboard_dir)
-	writer.add_graph(sess.graph)
 	print(threads)
 	try:
 		if not coord.should_stop():

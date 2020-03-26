@@ -13,7 +13,7 @@ val_sum_file = "../tfRecords_data/tf_val_sum.txt"
 tensorboard_dir = "../tensorboard_view/view/train_01"
 
 batch = 64
-epoch = 2000
+epoch = 20000
 
 def load_sum_info(sum_file):
 	with open(sum_file, 'r') as f:
@@ -49,9 +49,11 @@ writer = tf.summary.FileWriter(tensorboard_dir)
 with tf.Session() as sess:
 	print('training')
 	example_num, category_num = load_sum_info(train_sum_file)
-	img_batch, label_batch = read_tfRecord(tfRecords_train_file, shuffle=True, epochs=epoch)
+# 	img_batch, label_batch = read_tfRecord(tfRecords_train_file, shuffle=True, epochs=epoch)
+	img_batch, label_batch = read_tfRecord(tfRecords_train_file, shuffle=True)
 	val_img_batch, val_label_batch = read_tfRecord(tfRecords_val_file, shuffle=True)
-	min_after_dequeue = 100
+# 	val_img_batch, val_label_batch = None, None
+	min_after_dequeue = 128
 	capacity = min_after_dequeue + 3*batch
 	image_batches, label_batches = tf.train.shuffle_batch([img_batch, label_batch], batch_size=batch, capacity=capacity, min_after_dequeue=min_after_dequeue)
 	val_image_batches, val_label_batches = tf.train.shuffle_batch([val_img_batch, val_label_batch], batch_size=batch, capacity=capacity, min_after_dequeue=min_after_dequeue)
@@ -65,6 +67,7 @@ with tf.Session() as sess:
 	try:
 		if not coord.should_stop():
 			model.fit_CAR_BRAND(source_train=image_batches, y_train=label_batches, source_val=val_image_batches, y_val=val_label_batches)
+# 			model.fit_CAR_BRAND(source_train=image_batches, y_train=label_batches, source_val=None, y_val=None)
 # 			print('test')
 	except tf.errors.OutOfRangeError:
 		print('Catch OutOfRangeError')

@@ -12,7 +12,7 @@ val_sum_file = "../tfRecords_data/tf_val_sum.txt"
 
 tensorboard_dir = "../tensorboard_view/view/train_01"
 
-batch = 64
+batch = 128
 epoch = 20000
 
 def load_sum_info(sum_file):
@@ -53,10 +53,10 @@ with tf.Session() as sess:
 	img_batch, label_batch = read_tfRecord(tfRecords_train_file, shuffle=True)
 	val_img_batch, val_label_batch = read_tfRecord(tfRecords_val_file, shuffle=True)
 # 	val_img_batch, val_label_batch = None, None
-	min_after_dequeue = 128
+	min_after_dequeue = 256
 	capacity = min_after_dequeue + 3*batch
 	image_batches, label_batches = tf.train.shuffle_batch([img_batch, label_batch], batch_size=batch, capacity=capacity, min_after_dequeue=min_after_dequeue)
-	val_image_batches, val_label_batches = tf.train.shuffle_batch([val_img_batch, val_label_batch], batch_size=batch, capacity=capacity, min_after_dequeue=min_after_dequeue)
+	val_image_batches, val_label_batches = tf.train.shuffle_batch([val_img_batch, val_label_batch], batch_size=256, capacity=1024, min_after_dequeue=min_after_dequeue)
 	model = CAR_BRAND_MODEL(sess=sess, category_n=category_num, example_n=example_num, batch_size=batch, epochs=epoch, tb_writer=writer)
 	init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
 	sess.run(init_op)

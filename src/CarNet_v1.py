@@ -18,6 +18,7 @@ class CAR_BRAND_MODEL:
         self._mean_loss = None
         self._accuracy = None
         self._optimizer = None
+        self._prec = None
         self._saver = None
         self._ckpt = None
         self._epochs = epochs
@@ -41,28 +42,29 @@ class CAR_BRAND_MODEL:
 #                 print(X_batch.shape)
                 feed_dict = {self.X: X_batch, self.y: Y_batch}
                 _, train_loss = self._sess.run([self._optimizer, self._mean_loss], feed_dict=feed_dict)
-                if total_batch % 1000 == 0:
-                    X_val, y_v = self._sess.run([source_val, y_val])
-#                     losses, acc_val, summ = self._sess.run([self._mean_loss, self._accuracy, self._summ], feed_dict={self.X: X_val, self.y: y_v})
-                    acc_val, summ = self._sess.run([self._accuracy, self._summ], feed_dict={self.X: X_val, self.y: y_v})
-#                     losses, acc_val, summ = self._sess.run([self._mean_loss, self._accuracy, self._summ], feed_dict={self.X: X_batch, self.y: Y_batch})
-#                     losses = self._sess.run([self._mean_loss], feed_dict={self.X: X_batch, self.y: Y_batch})
-#                     acc_val = 0
-                    time_dif = timedelta(seconds=int(round(time.time() - start_time)))
-                    msg = "Epoch: {0:>4}, Iter: {1:>9}, Time: {2}, loss: {3:>20}, acc: {4}"
-                    print(msg.format(epoch, total_batch, time_dif, train_loss, acc_val))
-                    self._tb_writer.add_summary(summ, total_batch)
-#                     self.save_car_model(epoch)
-                if acc_val > best_acc_val:
-                    best_acc_val = acc_val
-                    last_improved = total_batch
-                    print("improved!")
-                    self.save_car_model(epoch)
-                if total_batch - last_improved > require_improment:
-                    print("Early stopping in ", total_batch, " step! And the best validation accuracy is ", best_acc_val, '.')
-                    flag = True
-                    break
                 total_batch += 1
+                
+            X_val, y_v = self._sess.run([source_val, y_val])
+#             losses, acc_val, summ = self._sess.run([self._mean_loss, self._accuracy, self._summ], feed_dict={self.X: X_val, self.y: y_v})
+            acc_val, summ = self._sess.run([self._accuracy, self._summ], feed_dict={self.X: X_val, self.y: y_v})
+#             losses, acc_val, summ = self._sess.run([self._mean_loss, self._accuracy, self._summ], feed_dict={self.X: X_batch, self.y: Y_batch})
+#             losses = self._sess.run([self._mean_loss], feed_dict={self.X: X_batch, self.y: Y_batch})
+#             acc_val = 0
+            time_dif = timedelta(seconds=int(round(time.time() - start_time)))
+            msg = "Epoch: {0:>4}, Iter: {1:>9}, Time: {2}, loss: {3:>20}, acc: {4}"
+            print(msg.format(epoch, total_batch, time_dif, train_loss, acc_val))
+            self._tb_writer.add_summary(summ, total_batch)
+            if total_batch % 10000 == 0:
+                self.save_car_model(epoch)
+            if acc_val > best_acc_val:
+                best_acc_val = acc_val
+                last_improved = total_batch
+                print("improved!")
+                self.save_car_model(epoch)
+            if total_batch - last_improved > require_improment:
+                print("Early stopping in ", total_batch, " step! And the best validation accuracy is ", best_acc_val, '.')
+                flag = True
+                break
             if flag:
                 break
 #             self.save_car_model(epoch)
@@ -82,6 +84,8 @@ class CAR_BRAND_MODEL:
             accs = tf.equal(tf.argmax(self._logits, 1), tf.argmax(tf.one_hot(self.y, self._category_num), 1))
             self._accuracy = tf.reduce_mean(tf.cast(accs, tf.float32))
             tf.summary.scalar('accuracy', self._accuracy)
+        with tf.name_scope('predict'):
+            self._prec = prec 
         if self._saver is None:
             self._saver = tf.train.Saver(max_to_keep=1)
         self._summ = tf.summary.merge_all()
@@ -103,5 +107,9 @@ class CAR_BRAND_MODEL:
             self._saver.restore(self._sess, self._ckpt.model_checkpoint_path)
             print('Model restored...')
         
+    def predict(self, data):
+        feed_dict = {self.X:data}
+        class_code = self._sess.run(self._prec, feed_dict=feed_dict)
+        return class_code
         
         

@@ -4,8 +4,11 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 
-data_base_dir = "../dataset/car_brands/data/"
-tfRecords_file_path = "../tfRecords_data/"
+img_width = 256
+img_height = 256
+
+data_base_dir = "./"
+tfRecords_file_path = "/home/utopa/car_brand_tf/tfRecords_data/"
 
 def load_labels(path):
     car_type_2_labels = {}
@@ -49,7 +52,7 @@ def load_file(example_list_file):
         labels.append(int(label))
     return np.asarray(examples), np.asarray(labels), len(lines), len(set(labels))
 
-def convertjpg(jpgfile, width=256, height=256):
+def convertjpg(jpgfile, width=512, height=512):
 #     print(jpgfile)
     img = Image.open(jpgfile)
     try:
@@ -64,7 +67,7 @@ def _bytes_feature(value):
 def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
-def trans2tfRecord(trainFile, name, output_dir, height=256, width=256):
+def trans2tfRecord(trainFile, name, output_dir, height=512, width=512):
     if not os.path.exists(output_dir) or os.path.isfile(output_dir):
         os.makedirs(output_dir)
     _examples, _labels, example_num, category_num = load_file(trainFile)
@@ -89,7 +92,7 @@ def trans2tfRecord(trainFile, name, output_dir, height=256, width=256):
 
 if __name__ == "__main__":
     getTrainList()
-    trans2tfRecord('train.txt', 'tf_train', tfRecords_file_path)
+    trans2tfRecord('train.txt', 'tf_train', tfRecords_file_path, height=img_height, width=img_width)
     getValList()
-    trans2tfRecord('val.txt', 'tf_val', tfRecords_file_path)
+    trans2tfRecord('val.txt', 'tf_val', tfRecords_file_path, height=img_height, width=img_width)
     

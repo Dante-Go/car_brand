@@ -5,11 +5,14 @@ from datetime import timedelta
 import os
 from mobileNetV3_layers import *
 
-model_path = "../model/image_model/"
+model_path = "/home/utopa/car_brand_tf/model/image_model/"
+
+img_width = 256
+img_height = 256
 
 
 class CAR_BRAND_MODEL:
-    def __init__(self, sess, category_n, example_n, batch_size, epochs, tb_writer):
+    def __init__(self, sess, category_n, example_n, batch_size, epochs, tb_writer, is_train):
         self._sess = sess
         self._category_num = category_n
         self._example_num = example_n
@@ -26,7 +29,7 @@ class CAR_BRAND_MODEL:
         self._tb_writer = tb_writer
         self._summ = None
         
-        self.create_model()
+        self.create_model(is_train)
         
         
     def fit_CAR_BRAND(self, source_train, y_train, source_val, y_val):
@@ -47,20 +50,20 @@ class CAR_BRAND_MODEL:
             X_val, y_v = self._sess.run([source_val, y_val])
 #             losses, acc_val, summ = self._sess.run([self._mean_loss, self._accuracy, self._summ], feed_dict={self.X: X_val, self.y: y_v})
             acc_val, summ = self._sess.run([self._accuracy, self._summ], feed_dict={self.X: X_val, self.y: y_v})
-#             losses, acc_val, summ = self._sess.run([self._mean_loss, self._accuracy, self._summ], feed_dict={self.X: X_batch, self.y: Y_batch})
+#             acc_val, summ = self._sess.run([self._accuracy, self._summ], feed_dict={self.X: X_batch, self.y: Y_batch})
 #             losses = self._sess.run([self._mean_loss], feed_dict={self.X: X_batch, self.y: Y_batch})
 #             acc_val = 0
             time_dif = timedelta(seconds=int(round(time.time() - start_time)))
             msg = "Epoch: {0:>4}, Iter: {1:>9}, Time: {2}, loss: {3:>20}, acc: {4}"
             print(msg.format(epoch, total_batch, time_dif, train_loss, acc_val))
             self._tb_writer.add_summary(summ, total_batch)
-            if total_batch % 10000 == 0:
+            if epoch % 10 == 0:
                 self.save_car_model(epoch)
             if acc_val > best_acc_val:
                 best_acc_val = acc_val
                 last_improved = total_batch
                 print("improved!")
-                self.save_car_model(epoch)
+                self.save_car_model(epoch, better=str(best_acc_val))
             if total_batch - last_improved > require_improment:
                 print("Early stopping in ", total_batch, " step! And the best validation accuracy is ", best_acc_val, '.')
                 flag = True
@@ -69,10 +72,10 @@ class CAR_BRAND_MODEL:
                 break
 #             self.save_car_model(epoch)
 
-    def create_model(self):
-        self.X = tf.placeholder(tf.float32, shape=[None, 256, 256, 3], name="X")
+    def create_model(self, is_train):
+        self.X = tf.placeholder(tf.float32, shape=[None, img_height, img_width, 3], name="X")
         self.y = tf.placeholder(tf.int32, shape=[None], name="y")
-        self._logits, prec = mobilenetV3_small(self.X, self._category_num, is_train=True)
+        self._logits, prec = mobilenetV3_small(self.X, self._category_num, is_train=is_train)
         with tf.name_scope('loss'):
             self._loss = tf.nn.softmax_cross_entropy_with_logits(labels=tf.one_hot(self.y, self._category_num), logits=self._logits)
             self._mean_loss = tf.reduce_mean(self._loss, name="loss")
@@ -87,14 +90,17 @@ class CAR_BRAND_MODEL:
         with tf.name_scope('predict'):
             self._prec = prec 
         if self._saver is None:
-            self._saver = tf.train.Saver(max_to_keep=1)
+            self._saver = tf.train.Saver(max_to_keep=10)
         self._summ = tf.summary.merge_all()
         self._tb_writer.add_graph(self._sess.graph)
     
-    def save_car_model(self, step):
+    def save_car_model(self, step, better=''):
         if self._saver == None:
             return
-        model_file = os.path.join(model_path, "car_model")
+        if better is not '':
+            model_file = os.path.join(model_path, "car_model_"+better)
+        else:
+            model_file = os.path.join(model_path, "car_model")
         self._saver.save(self._sess, model_file, global_step=step)
     
     def restore_car_model(self):
@@ -108,7 +114,8 @@ class CAR_BRAND_MODEL:
             print('Model restored...')
         
     def predict(self, data):
-        feed_dict = {self.X:data}
+        feed_data = self._sess.run(data)
+        feed_dict = {self.X:feed_data}
         class_code = self._sess.run(self._prec, feed_dict=feed_dict)
         return class_code
         

@@ -2,15 +2,15 @@
 import tensorflow as tf
 import tensorboard
 
-from CarNet_v1 import CAR_BRAND_MODEL
+from CarNet_v1 import CAR_BRAND_MODEL, img_height, img_width
 
-tfRecords_train_file = "../tfRecords_data/tf_train.tfrecords"
-train_sum_file = "../tfRecords_data/tf_train_sum.txt"
+tfRecords_train_file = "/home/utopa/car_brand_tf/tfRecords_data/tf_train.tfrecords"
+train_sum_file = "/home/utopa/car_brand_tf/tfRecords_data/tf_train_sum.txt"
 
-tfRecords_val_file = "../tfRecords_data/tf_val.tfrecords"
-val_sum_file = "../tfRecords_data/tf_val_sum.txt"
+tfRecords_val_file = "/home/utopa/car_brand_tf/tfRecords_data/tf_val.tfrecords"
+val_sum_file = "/home/utopa/car_brand_tf/tfRecords_data/tf_val_sum.txt"
 
-tensorboard_dir = "../tensorboard_view/view/train_01"
+tensorboard_dir = "/home/utopa/car_brand_tf/tensorboard_view/view/train_01"
 
 batch = 128
 epoch = 20000
@@ -36,11 +36,11 @@ def read_tfRecord(file_tfRecord, shuffle=False, epochs=None):
 			}
 		)
 	image = tf.decode_raw(features['image_raw'], tf.uint8)
-	image = tf.reshape(image, [256, 256, 3])
+	image = tf.reshape(image, [img_height, img_width, 3])
 	image = tf.cast(image, tf.float32)
 	image = tf.image.per_image_standardization(image)
 	label = tf.cast(features['label'], tf.int64)
-	print(image, label)
+# 	print(image, label)
 	return image, label
 
 writer = tf.summary.FileWriter(tensorboard_dir)
@@ -57,7 +57,7 @@ with tf.Session() as sess:
 	capacity = min_after_dequeue + 3*batch
 	image_batches, label_batches = tf.train.shuffle_batch([img_batch, label_batch], batch_size=batch, capacity=capacity, min_after_dequeue=min_after_dequeue)
 	val_image_batches, val_label_batches = tf.train.shuffle_batch([val_img_batch, val_label_batch], batch_size=256, capacity=1024, min_after_dequeue=min_after_dequeue)
-	model = CAR_BRAND_MODEL(sess=sess, category_n=category_num, example_n=example_num, batch_size=batch, epochs=epoch, tb_writer=writer)
+	model = CAR_BRAND_MODEL(sess=sess, category_n=category_num, example_n=example_num, batch_size=batch, epochs=epoch, tb_writer=writer, is_train=True)
 	init_op = tf.group(tf.global_variables_initializer(), tf.local_variables_initializer())
 	sess.run(init_op)
 	model.restore_car_model()

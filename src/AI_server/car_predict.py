@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 import os
-from CarNet_v1 import CAR_BRAND_MODEL
+from AI_server.CarNet_v1 import CAR_BRAND_MODEL
 
 img_width = 256
 img_height = 256
@@ -81,7 +81,6 @@ image = tf.reshape(image, [img_width, img_height, 3])
 image = tf.cast(image, tf.float32)
 image = tf.image.per_image_standardization(image)
 data = tf.reshape(image, [-1, img_width, img_height, 3])
-
 
 
 writer = tf.summary.FileWriter(tensorboard_dir)

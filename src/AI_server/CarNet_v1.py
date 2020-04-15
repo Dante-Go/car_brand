@@ -3,7 +3,7 @@ import tensorflow as tf
 import time
 from datetime import timedelta
 import os
-from mobileNetV3_layers import *
+from AI_server.mobileNetV3_layers import *
 
 model_path = "/home/utopa/car_brand_tf/model/image_model/"
 

@@ -2,7 +2,7 @@
 import tensorflow as tf
 import tensorboard
 
-from CarNet_v1 import CAR_BRAND_MODEL, img_height, img_width
+from AI_server.CarNet_v1 import CAR_BRAND_MODEL, img_height, img_width
 
 tfRecords_train_file = "/home/utopa/car_brand_tf/tfRecords_data/tf_train.tfrecords"
 train_sum_file = "/home/utopa/car_brand_tf/tfRecords_data/tf_train_sum.txt"

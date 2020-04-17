@@ -3,6 +3,7 @@ import os
 import numpy as np
 from PIL import Image
 import tensorflow as tf
+import random as rand
 
 img_width = 256
 img_height = 256
@@ -45,6 +46,7 @@ def getValList():
 
 def load_file(example_list_file):
     lines = np.genfromtxt(example_list_file, delimiter=" ", encoding='utf-8', dtype='U75')
+    rand.shuffle(lines)
     examples = []
     labels = []
     for example, label in lines:

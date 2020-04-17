@@ -188,5 +188,5 @@ def mobilenetV3_small(inputs, num_classes, is_train=True):
         net = conv_1x1(net, num_classes, name='logits',bias=True)
         logits = flatten(net)
         pred = tf.nn.softmax(logits, name='prob')
-#         pred = tf.argmax(pred, axis=1)
+        pred = tf.argmax(pred, axis=1)
         return logits, pred

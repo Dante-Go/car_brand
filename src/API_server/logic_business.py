@@ -12,6 +12,7 @@ import cv2
 from API_server.utils.log_util import log_print
 from API_server.common.bs_define import *
 from API_server.common.node_protocol import CarComparePackage
+from AI_server.car_predict import *
 
 class CarAnalyseServerTask(object):
     def __init__(self, client_thread, req_data, data_len):
@@ -31,6 +32,8 @@ class CarAnalyseServerWorkerThread(threading.Thread):
         self.data_dir = data_dir
         self.param_dict = param_dict
         self.running = False
+        
+        self.model = CarPredict()
         
     def run(self):
         # log
@@ -71,12 +74,18 @@ class CarAnalyseServerWorkerThread(threading.Thread):
 #                     cv2.waitKey()
                     
                     image = io.BytesIO(request.bin_data)
-                    img = Image.open(image)
+#                     img = Image.open(image)
 #                     img.show()
+                    car_code, car_type = self.model.car_predict(image)
+#                     car_code, car_type = 1, 't'
+                    print(car_code)
+                    print(car_type)
+                    
         info_dict_data = {}
         info_dict_data["process_result"] = AI_SUCCESS
-        info_dict_data["id"] = 1
-        info_dict_data["name"] = "BMW"
+        info_dict_data["id"] = int(car_code)
+        info_dict_data["name"] = car_type
+        print(info_dict_data)
 
         json_data = json.dumps(info_dict_data)
 

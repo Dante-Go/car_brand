@@ -114,7 +114,8 @@ class CAR_BRAND_MODEL:
             print('Model restored...')
         
     def predict(self, data):
-        feed_data = self._sess.run(data)
+#         feed_data = self._sess.run(data)
+        feed_data = data
         feed_dict = {self.X:feed_data}
         class_code = self._sess.run(self._prec, feed_dict=feed_dict)
         return class_code

@@ -54,10 +54,13 @@ def load_file(example_list_file):
         labels.append(int(label))
     return np.asarray(examples), np.asarray(labels), len(lines), len(set(labels))
 
-def convertjpg(jpgfile, width=512, height=512):
+def convertjpg(jpgfile, width=256, height=256):
 #     print(jpgfile)
-    img = Image.open(jpgfile)
+    new_img = None
     try:
+        img = Image.open(jpgfile)
+        (width, height) = img.size
+        region = (0, height*0.4, width, height*0.85)
         new_img = img.resize((width, height), Image.BILINEAR)
     except Exception as e:
         print(e)
@@ -69,12 +72,15 @@ def _bytes_feature(value):
 def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
-def trans2tfRecord(trainFile, name, output_dir, height=512, width=512):
+def trans2tfRecord(trainFile, name, output_dir, height=256, width=256):
     if not os.path.exists(output_dir) or os.path.isfile(output_dir):
         os.makedirs(output_dir)
     _examples, _labels, example_num, category_num = load_file(trainFile)
     filename = name + '.tfrecords'
     filename = os.path.join(output_dir, filename)
+    if os.path.exists(filename):
+        print('{0} exists.' %(filename))
+        return 
     writer = tf.python_io.TFRecordWriter(filename)
     for i, [example, label] in enumerate(zip(_examples, _labels)):
         print("NO{}".format(i))

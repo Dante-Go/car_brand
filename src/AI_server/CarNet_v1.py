@@ -4,6 +4,7 @@ import time
 from datetime import timedelta
 import os
 from AI_server.mobileNetV3_layers import *
+import numpy as np
 
 model_path = "/home/utopa/car_brand_tf/model/image_model/"
 
@@ -49,6 +50,7 @@ class CAR_BRAND_MODEL:
                 
             X_val, y_v = self._sess.run([source_val, y_val])
 #             losses, acc_val, summ = self._sess.run([self._mean_loss, self._accuracy, self._summ], feed_dict={self.X: X_val, self.y: y_v})
+#             t_logits, acc_val, summ = self._sess.run([self._logits, self._accuracy, self._summ], feed_dict={self.X: X_val, self.y: y_v})
             acc_val, summ = self._sess.run([self._accuracy, self._summ], feed_dict={self.X: X_val, self.y: y_v})
 #             acc_val, summ = self._sess.run([self._accuracy, self._summ], feed_dict={self.X: X_batch, self.y: Y_batch})
 #             losses = self._sess.run([self._mean_loss], feed_dict={self.X: X_batch, self.y: Y_batch})
@@ -56,6 +58,8 @@ class CAR_BRAND_MODEL:
             time_dif = timedelta(seconds=int(round(time.time() - start_time)))
             msg = "Epoch: {0:>4}, Iter: {1:>9}, Time: {2}, loss: {3:>20}, acc: {4}"
             print(msg.format(epoch, total_batch, time_dif, train_loss, acc_val))
+#             test_logits = np.argmax(t_logits, 1)
+#             print(test_logits)
             self._tb_writer.add_summary(summ, total_batch)
             if epoch % 10 == 0:
                 self.save_car_model(epoch)
@@ -77,7 +81,9 @@ class CAR_BRAND_MODEL:
         self.y = tf.placeholder(tf.int32, shape=[None], name="y")
         self._logits, prec = mobilenetV3_small(self.X, self._category_num, is_train=is_train)
         with tf.name_scope('loss'):
-            self._loss = tf.nn.softmax_cross_entropy_with_logits(labels=tf.one_hot(self.y, self._category_num), logits=self._logits)
+            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            with tf.control_dependencies(update_ops):
+                self._loss = tf.nn.softmax_cross_entropy_with_logits(labels=tf.one_hot(self.y, self._category_num), logits=self._logits)
             self._mean_loss = tf.reduce_mean(self._loss, name="loss")
             tf.summary.scalar('loss', self._mean_loss)
         with tf.name_scope('train'):
@@ -90,7 +96,12 @@ class CAR_BRAND_MODEL:
         with tf.name_scope('predict'):
             self._prec = prec 
         if self._saver is None:
-            self._saver = tf.train.Saver(max_to_keep=10)
+            var_list = tf.trainable_variables()
+            g_list = tf.global_variables()
+            bn_moving_vars = [g for g in g_list if 'moving_mean' in g.name]
+            bn_moving_vars += [g for g in g_list if 'moving_variance' in g.name]
+            var_list += bn_moving_vars
+            self._saver = tf.train.Saver(var_list=var_list, max_to_keep=10)
         self._summ = tf.summary.merge_all()
         self._tb_writer.add_graph(self._sess.graph)
     
@@ -117,7 +128,17 @@ class CAR_BRAND_MODEL:
 #         feed_data = self._sess.run(data)
         feed_data = data
         feed_dict = {self.X:feed_data}
-        class_code = self._sess.run(self._prec, feed_dict=feed_dict)
+        logits, class_code = self._sess.run([self._logits,self._prec], feed_dict=feed_dict)
+        print(np.argmax(logits, 1))
         return class_code
+    
+    def test_predict(self, data, y_data):
+        X_val, y_val = self._sess.run([data, y_data])
+#         print(np.shape(X_val))
+#         print(np.shape(X_val[0]))
+        logits, prec = self._sess.run([self._logits, self._prec], feed_dict={self.X: X_val})
+        class_code = np.argmax(logits, 1)
+        print(logits)
+        return y_val, prec
         
         

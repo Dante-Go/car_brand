@@ -12,7 +12,8 @@ import cv2
 from API_server.utils.log_util import log_print
 from API_server.common.bs_define import *
 from API_server.common.node_protocol import CarComparePackage
-from AI_server.car_predict import *
+# from AI_server.car_predict import *
+from AI_server.TF_slim_models import predict
 
 class CarAnalyseServerTask(object):
     def __init__(self, client_thread, req_data, data_len):

@@ -212,7 +212,7 @@ if __name__ == '__main__':
     train_log_step=100
     base_lr = 0.001  # 学习率
     # 重头开始训练的话，mobilenet收敛慢的一比，大概20000次迭代后，准确率开始蹭蹭的往上长,迭代十万次后准确率才70%
-    max_steps = 500000  # 迭代次数
+    max_steps = 5000000  # 迭代次数
     train_param=[base_lr,max_steps]
 
     val_log_step=500

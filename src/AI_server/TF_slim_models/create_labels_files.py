@@ -10,7 +10,7 @@
 import os
 import os.path
 
-from global_defines import *
+from AI_server.TF_slim_models.global_defines import *
 
 
 def write_txt(content, filename, mode='w'):

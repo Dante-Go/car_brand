@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import random
 from PIL import Image
 
-import global_defines as gbl
+import AI_server.TF_slim_models.global_defines as gbl
 
 
 ##########################################################################

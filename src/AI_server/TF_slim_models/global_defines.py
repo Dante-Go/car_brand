@@ -1,8 +1,10 @@
 #coding=utf-8
-# dataset_base_path = '/u02/dataset/car_brands/data'
-dataset_base_path = '/data/car_brand_model/data'
-# model_base_path = '/home/utopa/car_brand_tf/model/image_model'
-model_base_path = '/data/car_brand_model/car_brand_tf/model/image_model'
+dataset_base_path = '/u02/dataset/car_brands/data'
+# dataset_base_path = '/data/car_brand_model/data'
+model_base_path = '/home/utopa/car_brand_tf/model/image_model'
+# model_base_path = '/data/car_brand_model/car_brand_tf/model/image_model'
+
+cascade_path = '/home/utopa/car_brand_tf/src/AI_server/TF_slim_models/cascade.xml'
 
 labels_nums = 3  # 类别个数
 batch_size = 32  #

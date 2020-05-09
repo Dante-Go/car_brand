@@ -16,106 +16,112 @@ import AI_server.TF_slim_models.global_defines as gbl
 
 
 
-def g_crop_region(x1, y1, x2, y2, img):
-        crop_x1 = x1
-        crop_x2 = x2 
-        crop_y1 = y1
-        crop_y2 = y2
-        crop_w = crop_x2 - crop_x1
-        crop_h = crop_y2 - crop_y1
-        center_x = int((crop_x1 + crop_x2)/2)
-        center_y = int((crop_y1 + crop_y2)/2)
-        tmp = 0
-        if crop_w > crop_h:
-            tmp = int(crop_w/2)
-        else:
-            tmp = int(crop_h/2)
-        crop_x1 = center_x - tmp
-        crop_x2 = center_x + tmp
-        crop_y1 = y2 - (tmp*2)
-        crop_y2 = y2
-        if crop_x1 < 0:
-            crop_x1 = 0
-        if crop_y1 < 0:
-            crop_y1 = 0
-        if crop_x2 > img.shape[1]:
-            crop_x2 = img.shape[1]
-        if crop_y2 > img.shape[0]:
-            crop_y2 = img.shape[0]
-        return crop_y1, crop_y2, crop_x1, crop_x2
-
-def g_read_img(image, resize_height,resize_width):
-        im = cv2.imread(image)
-        resize_h = 400
-        height = im.shape[0]
-        scale = im.shape[1] / float(height)
-        img = cv2.resize(im, (int(scale*resize_h), resize_h)) 
-        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        cascade = cv2.CascadeClassifier(gbl.cascade_path)
-        car_plates = cascade.detectMultiScale(img_gray, 1.1, 2, minSize=(36, 9), maxSize=(36*40, 9*40))
-        crop_img = img
-#         print(car_plates)
-        if len(car_plates) > 0:
-            for car_plate in car_plates:
-                x, y, w, h = car_plate
-                if w<10 or h < 10:
-                    continue
-                edge = w
-                if w < h:
-                    edge = h
-                crop_x = x 
-                crop_y = y - edge
-                crop_x2 = x + edge
-                crop_y2 = y
-                y1, y2, x1, x2 = g_crop_region(crop_x, crop_y, crop_x2, crop_y2, img)
-                crop_img = img[y1:y2, x1:x2]
-#                 str = image.replace('.jpg', 'brand.jpg')
-#                 print(str)
-#                 cv2.imwrite(str, crop_img)
-        rgb_image = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)#将BGR转为RGB
-        np_image = cv2.resize(rgb_image, (resize_width, resize_height))
-        np_image=np.asanyarray(np_image)
-        np_image=np_image/255.0
-#         np_image=np_image[np.newaxis,:]
-        return np_image
-
-def  predict(models_path,image_dir,labels_filename,labels_nums, data_format):
-    [batch_size, resize_height, resize_width, depths] = data_format
-
-    labels = np.loadtxt(labels_filename, str, delimiter='\t')
-    input_images = tf.placeholder(dtype=tf.float32, shape=[None, resize_height, resize_width, depths], name='input')
-
-    #其他模型预测请修改这里
-#     with slim.arg_scope(inception_v3.inception_v3_arg_scope()):
-#         out, end_points = inception_v3.inception_v3(inputs=input_images, num_classes=labels_nums, dropout_keep_prob=1.0, is_training=False)
-    with slim.arg_scope(mobilenet_v1.mobilenet_v1_arg_scope()):
-        out, end_points = mobilenet_v1.mobilenet_v1(inputs=input_images, num_classes=labels_nums, dropout_keep_prob=1.0, is_training=False, global_pool=True)
-
-    # 将输出结果进行softmax分布,再求最大概率所属类别
-    score = tf.nn.softmax(out,name='pre')
-    class_id = tf.argmax(score, 1)
-
-    sess = tf.InteractiveSession()
-    sess.run(tf.global_variables_initializer())
-    saver = tf.train.Saver()
-#     saver.restore(sess, models_path)
-    ckpt = tf.train.get_checkpoint_state(gbl.model_base_path)
-    if ckpt and ckpt.model_checkpoint_path:
-        print(ckpt.model_checkpoint_path)
-        print(ckpt)
-        saver.restore(sess, ckpt.model_checkpoint_path)
-        print('Model restored...')
-        
-    images_list=glob.glob(os.path.join(image_dir,'*.jpg'))
-    for image_path in images_list:
-        im=g_read_img(image_path,resize_height,resize_width)
-#         im = read_image(image_path, resize_height, resize_width, normalization=True)
-        im=im[np.newaxis,:]
-        #pred = sess.run(f_cls, feed_dict={x:im, keep_prob:1.0})
-        pre_score,pre_label = sess.run([score,class_id], feed_dict={input_images:im})
-        max_score=pre_score[0,pre_label]
-        print("{} is: pre labels:{},name:{} score: {}".format(image_path,pre_label,labels[pre_label], max_score))
-    sess.close()
+# def g_crop_region(x1, y1, x2, y2, img):
+#         crop_x1 = x1
+#         crop_x2 = x2 
+#         crop_y1 = y1
+#         crop_y2 = y2
+#         crop_w = crop_x2 - crop_x1
+#         if crop_w > img.shape[1]:
+#             crop_w = img.shape[1]
+#         crop_h = crop_y2 - crop_y1
+#         if crop_h > img.shape[0]:
+#             crop_h = img.shape[0]
+#         center_x = int((crop_x1 + crop_x2)/2)
+#         center_y = int((crop_y1 + crop_y2)/2)
+#         tmp = 0
+#         if crop_w > crop_h:
+#             tmp = int(crop_w/2)
+#         else:
+#             tmp = int(crop_h/2)
+#         crop_x1 = center_x - tmp
+#         crop_x2 = center_x + tmp
+#         crop_y1 = y2 - (tmp*2)
+#         crop_y2 = y2
+#         if crop_x1 < 0:
+#             crop_x1 = 0
+#         if crop_y1 < 0:
+#             crop_y1 = 0
+#         if crop_x2 > img.shape[1]:
+#             crop_x2 = img.shape[1]
+#             crop_x1 = crop_x2 - (tmp*2)
+#         if crop_y2 > img.shape[0]:
+#             crop_y2 = img.shape[0]
+#             crop_y1 = crop_y2 - (tmp*2)
+#         return crop_y1, crop_y2, crop_x1, crop_x2
+# 
+# def g_read_img(image, resize_height,resize_width):
+#         im = cv2.imread(image)
+#         resize_h = 400
+#         height = im.shape[0]
+#         scale = im.shape[1] / float(height)
+#         img = cv2.resize(im, (int(scale*resize_h), resize_h)) 
+#         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#         cascade = cv2.CascadeClassifier(gbl.cascade_path)
+#         car_plates = cascade.detectMultiScale(img_gray, 1.1, 2, minSize=(36, 9), maxSize=(36*40, 9*40))
+#         crop_img = img
+# #         print(car_plates)
+#         if len(car_plates) > 0:
+#             for car_plate in car_plates:
+#                 x, y, w, h = car_plate
+#                 if w<10 or h < 10:
+#                     continue
+#                 edge = w
+#                 if w < h:
+#                     edge = h
+#                 crop_x = x 
+#                 crop_y = y - edge
+#                 crop_x2 = x + edge
+#                 crop_y2 = y
+#                 y1, y2, x1, x2 = g_crop_region(crop_x, crop_y, crop_x2, crop_y2, img)
+#                 crop_img = img[y1:y2, x1:x2]
+# #                 str = image.replace('.jpg', 'brand.jpg')
+# #                 print(str)
+# #                 cv2.imwrite(str, crop_img)
+#         rgb_image = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)#将BGR转为RGB
+#         np_image = cv2.resize(rgb_image, (resize_width, resize_height))
+#         np_image=np.asanyarray(np_image)
+#         np_image=np_image/255.0
+# #         np_image=np_image[np.newaxis,:]
+#         return np_image
+# 
+# def  predict(models_path,image_dir,labels_filename,labels_nums, data_format):
+#     [batch_size, resize_height, resize_width, depths] = data_format
+# 
+#     labels = np.loadtxt(labels_filename, str, delimiter='\t')
+#     input_images = tf.placeholder(dtype=tf.float32, shape=[None, resize_height, resize_width, depths], name='input')
+# 
+#     #其他模型预测请修改这里
+# #     with slim.arg_scope(inception_v3.inception_v3_arg_scope()):
+# #         out, end_points = inception_v3.inception_v3(inputs=input_images, num_classes=labels_nums, dropout_keep_prob=1.0, is_training=False)
+#     with slim.arg_scope(mobilenet_v1.mobilenet_v1_arg_scope()):
+#         out, end_points = mobilenet_v1.mobilenet_v1(inputs=input_images, num_classes=labels_nums, dropout_keep_prob=1.0, is_training=False, global_pool=True)
+# 
+#     # 将输出结果进行softmax分布,再求最大概率所属类别
+#     score = tf.nn.softmax(out,name='pre')
+#     class_id = tf.argmax(score, 1)
+# 
+#     sess = tf.InteractiveSession()
+#     sess.run(tf.global_variables_initializer())
+#     saver = tf.train.Saver()
+# #     saver.restore(sess, models_path)
+#     ckpt = tf.train.get_checkpoint_state(gbl.model_base_path)
+#     if ckpt and ckpt.model_checkpoint_path:
+#         print(ckpt.model_checkpoint_path)
+#         print(ckpt)
+#         saver.restore(sess, ckpt.model_checkpoint_path)
+#         print('Model restored...')
+#         
+#     images_list=glob.glob(os.path.join(image_dir,'*.jpg'))
+#     for image_path in images_list:
+#         im=g_read_img(image_path,resize_height,resize_width)
+# #         im = read_image(image_path, resize_height, resize_width, normalization=True)
+#         im=im[np.newaxis,:]
+#         #pred = sess.run(f_cls, feed_dict={x:im, keep_prob:1.0})
+#         pre_score,pre_label = sess.run([score,class_id], feed_dict={input_images:im})
+#         max_score=pre_score[0,pre_label]
+#         print("{} is: pre labels:{},name:{} score: {}".format(image_path,pre_label,labels[pre_label], max_score))
+#     sess.close()
     
 
 
@@ -161,7 +167,11 @@ class CarPredict_slim_mobilenet_V1(object):
         crop_y1 = y1
         crop_y2 = y2
         crop_w = crop_x2 - crop_x1
+        if crop_w > img.shape[1]:
+            crop_w = img.shape[1]
         crop_h = crop_y2 - crop_y1
+        if crop_h > img.shape[0]:
+            crop_h = img.shape[0]
         center_x = int((crop_x1 + crop_x2)/2)
         center_y = int((crop_y1 + crop_y2)/2)
         tmp = 0
@@ -179,8 +189,10 @@ class CarPredict_slim_mobilenet_V1(object):
             crop_y1 = 0
         if crop_x2 > img.shape[1]:
             crop_x2 = img.shape[1]
+            crop_x1 = crop_x2 - (tmp*2)
         if crop_y2 > img.shape[0]:
             crop_y2 = img.shape[0]
+            crop_y1 = crop_y2 - (tmp*2)
         return crop_y1, crop_y2, crop_x1, crop_x2
     
     def _image_process(self, image):

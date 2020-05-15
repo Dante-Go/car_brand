@@ -10,7 +10,8 @@
 import os
 import os.path
 
-from AI_server.TF_slim_models.global_defines import *
+# from AI_server.TF_slim_models.global_defines import *
+import AI_server.TF_slim_models.global_defines as gbl
 
 
 def write_txt(content, filename, mode='w'):
@@ -33,7 +34,7 @@ def write_txt(content, filename, mode='w'):
             f.write(str_line)
 
 
-data_base_dir = dataset_base_path
+data_base_dir = gbl.dataset_base_path
 
 def load_labels(path):
     car_type_2_labels = {}
@@ -66,10 +67,11 @@ def get_files_list(dir):
     files_list = []
     for parent, dirnames, filenames in os.walk(dir):
         for filename in filenames:
-            # print("parent is: " + parent)
-            # print("filename is: " + filename)
-            # print(os.path.join(parent, filename))  # 输出rootdir路径下所有文件（包含子文件）信息
+#             print("parent is: " + parent)
+#             print("filename is: " + filename)
+#             print(os.path.join(parent, filename))  # 输出rootdir路径下所有文件（包含子文件）信息
             curr_file = parent.split(os.sep)[-1]
+#             print(curr_file)
 #             if curr_file == 'flower':
 #                 labels = 0
 #             elif curr_file == 'guitar':
@@ -87,13 +89,13 @@ def get_files_list(dir):
 
 if __name__ == '__main__':
 #     train_dir = '/data/car_brand_model/data/train'
-    train_dir = os.path.join(dataset_base_path, 'train')
-    train_txt = os.path.join(dataset_base_path, 'train.txt')
+    train_dir = os.path.join(data_base_dir, 'train')
+    train_txt = os.path.join(data_base_dir, 'train.txt')
     train_data = get_files_list(train_dir)
     write_txt(train_data, train_txt, mode='w')
 
-    val_dir = os.path.join(dataset_base_path, 'val')
-    val_txt = os.path.join(dataset_base_path, 'val.txt')
+    val_dir = os.path.join(data_base_dir, 'val')
+    val_txt = os.path.join(data_base_dir, 'val.txt')
     val_data = get_files_list(val_dir)
     write_txt(val_data, val_txt, mode='w')
 

@@ -92,6 +92,8 @@ def read_image(filename, resize_height, resize_width,normalization=False):
     '''
 
     bgr_image = cv2.imread(filename)
+    if bgr_image is None:
+        return None
     if len(bgr_image.shape)==2:#若是灰度图则转为三通道
         print("Warning:gray image",filename)
         bgr_image = cv2.cvtColor(bgr_image, cv2.COLOR_GRAY2BGR)
@@ -218,6 +220,8 @@ def create_records(image_dir,file, output_record_dir, resize_height, resize_widt
             print('Err:no image',image_path)
             continue
         image = read_image(image_path, resize_height, resize_width)
+        if image is None:
+            continue
         image_raw = image.tostring()
         if i%log==0 or i==len(images_list)-1:
             print('------------processing:%d-th------------' % (i))
@@ -302,7 +306,8 @@ if __name__ == '__main__':
     train_labels = os.path.join(gbl.dataset_base_path, 'train.txt')  # 图片路径
     train_record_output = 'train{}.tfrecords'.format(resize_height)
     train_record_output = os.path.join(gbl.dataset_base_path, 'record', train_record_output)
-    create_records(image_dir,train_labels, train_record_output, resize_height, resize_width,shuffle,log)
+    if not os.path.exists(train_record_output):
+        create_records(image_dir,train_labels, train_record_output, resize_height, resize_width,shuffle,log)
     train_nums=get_example_nums(train_record_output)
     print("save train example nums={}".format(train_nums))
 

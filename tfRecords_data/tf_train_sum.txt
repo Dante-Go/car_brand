@@ -1,2 +1,0 @@
-example_num=28
-catelogy_num=4

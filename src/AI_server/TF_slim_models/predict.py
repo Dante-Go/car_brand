@@ -207,21 +207,24 @@ class CarPredict_slim_mobilenet_V1(object):
         height = im.shape[0]
         scale = im.shape[1] / float(height)
         img = cv2.resize(im, (int(scale*resize_h), resize_h)) 
-        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        car_plates = self.cascade.detectMultiScale(img_gray, 1.1, 2, minSize=(36, 9), maxSize=(36*40, 9*40))
-        crop_img = img
-        if len(car_plates) > 0:
-            for car_plate in car_plates:
-                x, y, w, h = car_plate
-                if w<10 or h < 10:
-                    continue
-                crop_x = x 
-                crop_y = y - int(h*3.5)
-                crop_x2 = x + w
-                crop_y2 = y + int(h/2)
-                y1, y2, x1, x2 = self.crop_region(crop_x, crop_y, crop_x2, crop_y2, img)
-                crop_img = img[y1:y2, x1:x2]
-        rgb_image = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)#将BGR转为RGB
+#         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#         car_plates = self.cascade.detectMultiScale(img_gray, 1.1, 2, minSize=(36, 9), maxSize=(36*40, 9*40))
+#         crop_img = img
+#         if len(car_plates) > 0:
+#             for car_plate in car_plates:
+#                 x, y, w, h = car_plate
+#                 if w<10 or h < 10:
+#                     continue
+#                 crop_x = x 
+#                 crop_y = y - int(h*3.5)
+#                 crop_x2 = x + w
+#                 crop_y2 = y + int(h/2)
+#                 y1, y2, x1, x2 = self.crop_region(crop_x, crop_y, crop_x2, crop_y2, img)
+#                 crop_img = img[y1:y2, x1:x2]
+#         rgb_image = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)#将BGR转为RGB
+#         tmp_name = 'ttt_{}_{}_{}_{}.jpg'.format(y1, y2, x1, x2)
+#         cv2.imwrite(tmp_name,rgb_image)
+        rgb_image = img
         np_image = cv2.resize(rgb_image, (self.resize_width, self.resize_height))
         np_image=np.asanyarray(np_image)
         np_image=np_image/255.0

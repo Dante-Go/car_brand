@@ -1,16 +1,9 @@
 eclipse.preferences.version=1
-encoding//src/AI_server/CarNet_v1.py=utf-8
 encoding//src/AI_server/TF_slim_models/create_labels_files.py=utf-8
 encoding//src/AI_server/TF_slim_models/create_tf_record.py=utf-8
 encoding//src/AI_server/TF_slim_models/global_defines.py=utf-8
 encoding//src/AI_server/TF_slim_models/mobilenet_train_val.py=utf-8
 encoding//src/AI_server/TF_slim_models/predict.py=utf-8
-encoding//src/AI_server/car_predict.py=utf-8
-encoding//src/AI_server/car_predict_debug.py=utf-8
-encoding//src/AI_server/car_train_model.py=utf-8
-encoding//src/AI_server/general_tfRecords.py=utf-8
-encoding//src/AI_server/mobileNetV3_layers.py=utf-8
-encoding//src/AI_server/remove_space_in_filename.py=utf-8
 encoding//src/API_server/api_logic_business.py=utf-8
 encoding//src/API_server/api_logic_extend.py=utf-8
 encoding//src/API_server/api_logic_server.py=utf-8

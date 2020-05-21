@@ -153,10 +153,23 @@ class CarPredict_slim_mobilenet_V1(object):
         self.sess.close()
         
     def car_predict(self, image):
-        im = self._image_process(image)
+        im, im_left, im_right = self._image_process(image)
         pre_score,pre_label = self.sess.run([self._score,self._class_id], feed_dict={self.input_images:im})
         max_score=pre_score[0,pre_label]
-        print("{} is : pre labels:{},name:{} score: {}".format(image, pre_label,self._labels[pre_label], max_score))
+        pre_score_left,pre_label_left = self.sess.run([self._score,self._class_id], feed_dict={self.input_images:im_left})
+        max_score_left=pre_score_left[0,pre_label_left]
+        pre_score_right,pre_label_right = self.sess.run([self._score,self._class_id], feed_dict={self.input_images:im_right})
+        max_score_right=pre_score_right[0,pre_label_right]
+        
+        if max_score_left > max_score:
+            max_score = max_score_left
+            pre_label = pre_label_left
+        if max_score_right > max_score:
+            max_score = max_score_right
+            pre_label = pre_label_right
+        
+#         print("{} is : pre labels:{},name:{} score: {}".format(image, pre_label,self._labels[pre_label], max_score))
+        print("pre labels:{},name:{} score: {}".format(pre_label,self._labels[pre_label], max_score))
         class_code = pre_label
         car_type = self._labels[pre_label][0]
         return class_code[0], car_type
@@ -207,29 +220,68 @@ class CarPredict_slim_mobilenet_V1(object):
         height = im.shape[0]
         scale = im.shape[1] / float(height)
         img = cv2.resize(im, (int(scale*resize_h), resize_h)) 
-#         img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-#         car_plates = self.cascade.detectMultiScale(img_gray, 1.1, 2, minSize=(36, 9), maxSize=(36*40, 9*40))
-#         crop_img = img
-#         if len(car_plates) > 0:
-#             for car_plate in car_plates:
-#                 x, y, w, h = car_plate
-#                 if w<10 or h < 10:
-#                     continue
-#                 crop_x = x 
-#                 crop_y = y - int(h*3.5)
-#                 crop_x2 = x + w
-#                 crop_y2 = y + int(h/2)
-#                 y1, y2, x1, x2 = self.crop_region(crop_x, crop_y, crop_x2, crop_y2, img)
-#                 crop_img = img[y1:y2, x1:x2]
-#         rgb_image = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)#将BGR转为RGB
+        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        car_plates = self.cascade.detectMultiScale(img_gray, 1.1, 2, minSize=(36, 9), maxSize=(36*40, 9*40))
+        crop_img = img
+        crop_img_left = img
+        crop_img_right = img
+        y1 = 0
+        y2 = img.shape[0]
+        x1 = 0
+        x2 = img.shape[1]
+        tmp_name = 'ttt_{}_{}_{}_{}.jpg'.format(y1, y2, x1, x2)
+        print(tmp_name)
+        if len(car_plates) > 0:
+            for car_plate in car_plates:
+                x, y, w, h = car_plate
+                if w<10 or h < 10:
+                    continue
+                crop_x = x 
+                crop_y = y - int(h*4)
+                crop_x2 = x + w
+                crop_y2 = y
+                y1, y2, x1, x2 = self.crop_region(crop_x, crop_y, crop_x2, crop_y2, img)
+                if y2 - y1 > 10 and x2 - x1 > 10:
+                    crop_img = img[y1:y2, x1:x2]
+                 
+                crop_x = x - w
+                crop_y = y - int(h*4)
+                crop_x2 = x + w
+                crop_y2 = y
+                y1, y2, x1, x2 = self.crop_region(crop_x, crop_y, crop_x2, crop_y2, img)
+                if y2 - y1 > 10 and x2 - x1 > 10:
+                    crop_img_left = img[y1:y2, x1:x2]
+                 
+                crop_x = x 
+                crop_y = y - int(h*4)
+                crop_x2 = x + w*2
+                crop_y2 = y
+                y1, y2, x1, x2 = self.crop_region(crop_x, crop_y, crop_x2, crop_y2, img)
+                if y2 - y1 > 10 and x2 - x1 > 10:
+                    crop_img_right = img[y1:y2, x1:x2]
+                 
+                 
+        rgb_image = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)#将BGR转为RGB
 #         tmp_name = 'ttt_{}_{}_{}_{}.jpg'.format(y1, y2, x1, x2)
+#         print(tmp_name)
 #         cv2.imwrite(tmp_name,rgb_image)
-        rgb_image = img
         np_image = cv2.resize(rgb_image, (self.resize_width, self.resize_height))
         np_image=np.asanyarray(np_image)
         np_image=np_image/255.0
         np_image=np_image[np.newaxis,:]
-        return np_image
+        
+        rgb_image = cv2.cvtColor(crop_img_left, cv2.COLOR_BGR2RGB)#将BGR转为RGB
+        np_image_left = cv2.resize(rgb_image, (self.resize_width, self.resize_height))
+        np_image_left=np.asanyarray(np_image_left)
+        np_image_left=np_image_left/255.0
+        np_image_left=np_image_left[np.newaxis,:]
+        
+        rgb_image = cv2.cvtColor(crop_img_right, cv2.COLOR_BGR2RGB)#将BGR转为RGB
+        np_image_right = cv2.resize(rgb_image, (self.resize_width, self.resize_height))
+        np_image_right=np.asanyarray(np_image_right)
+        np_image_right=np_image_right/255.0
+        np_image_right=np_image_right[np.newaxis,:]
+        return np_image, np_image_left, np_image_right
     
     def restore_car_model(self):
         ckpt = tf.train.get_checkpoint_state(self._models_path)
@@ -261,7 +313,7 @@ if __name__ == '__main__':
     car_predict_model = CarPredict_slim_mobilenet_V1(models_path, labels_filename, class_nums, data_format)
     images_list=glob.glob(os.path.join(image_dir,'*.jpg'))
     for image_path in images_list:
-        car_id, car_name = car_predict_model.car_predict(image_path)
+        car_id, car_name, _ = car_predict_model.car_predict(image_path)
 #         print(image_path)
 #         print(car_id)
 #         print(car_name)
